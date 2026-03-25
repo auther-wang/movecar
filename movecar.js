@@ -22,6 +22,16 @@ async function handleRequest(request) {
   const path = url.pathname
   const userParam = url.searchParams.get('u') || 'default';
   const userKey = userParam.toLowerCase();
+    // === 新增：检查用户是否配置了必要变量 ===
+  const hasNotifyConfig = getUserConfig(userKey, 'PUSHPLUS_TOKEN') || 
+                          getUserConfig(userKey, 'BARK_URL') || 
+                          getUserConfig(userKey, 'WECHAT_WORK_WEBHOOK');
+  const hasCarConfig = getUserConfig(userKey, 'CAR_TITLE');
+  
+  if (!hasNotifyConfig && !hasCarConfig) {
+    return new Response('Not Found', { status: 404 });
+  }
+  // === 新增结束 ===
 
   // 1. 二维码生成工具
   if (path === '/qr') return renderQRPage(url.origin, userKey);
