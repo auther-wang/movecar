@@ -229,11 +229,7 @@ function renderMainPage(origin, userKey) {
   const hasNotifyConfig = getUserConfig(userKey, 'PUSHPLUS_TOKEN') || 
                           getUserConfig(userKey, 'BARK_URL') || 
                           getUserConfig(userKey, 'WECHAT_WORK_WEBHOOK');
-  const noNotifyHint = !hasNotifyConfig && phone ? '
-<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin:16px 0">
-⚠️ 车主未配置在线通知，请直接点击下方按钮拨打电话
-</div>
-' : '';
+  const noNotifyHint = !hasNotifyConfig && phone ? '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin:16px 0">⚠️ 车主未配置在线通知，请直接点击下方按钮拨打电话</div>' : '';
   // === 新增结束 ===
   const phoneHtml = phone ? '<a href="tel:' + phone + '" class="btn-phone">📞 拨打车主电话</a>' : '';
 
