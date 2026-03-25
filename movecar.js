@@ -1,6 +1,6 @@
 /**
- * MoveCar 多用户智能挪车系统 - v2.1
- * 优化：30分钟断点续传 + 域名优先级二维码 + 多用户隔离
+ * MoveCar 多用户智能挪车系统 - v3.1
+ * 优化：30分钟断点续传 + 域名优先级二维码 + 多用户隔离 + 地区限制 + 企业微信推送
  */
 
 addEventListener('fetch', event => {
@@ -14,6 +14,10 @@ const CONFIG = {
 }
 
 async function handleRequest(request) {
+  const country = request.cf?.country;
+  if (country && country !== 'CN') {
+    return new Response('Access Denied', { status: 403 });
+  }
   const url = new URL(request.url)
   const path = url.pathname
   const userParam = url.searchParams.get('u') || 'default';
@@ -96,11 +100,22 @@ async function handleNotify(request, url, userKey) {
 
     const ppToken = getUserConfig(userKey, 'PUSHPLUS_TOKEN');
     const barkUrl = getUserConfig(userKey, 'BARK_URL');
+    //新增：企业微信API地址
+    const wecomWebhook = getUserConfig(userKey, 'WECHAT_WORK_WEBHOOK');
     const carTitle = getUserConfig(userKey, 'CAR_TITLE') || '车主';
     const baseDomain = (typeof globalThis.EXTERNAL_URL !== 'undefined' && globalThis.EXTERNAL_URL) ? globalThis.EXTERNAL_URL.replace(/\/$/, "") : url.origin;
     const confirmUrl = baseDomain + "/owner-confirm?u=" + userKey;
 
     let notifyText = "🚗 挪车请求【" + carTitle + "】\\n💬 留言: " + (body.message || '车旁有人等待');
+
+        
+    // === 新增：企业微信 Markdown 内容 ===
+    const wecomContent = `## 🚗 挪车请求通知
+       > 车主：**${carTitle}**
+       > 留言：${body.message || '车旁有人等待'}
+       > 时间：${new Date().toLocaleString()}
+       [👉 点击处理通知](${confirmUrl})`;
+    // === 新增结束 ===
     
     // 存储当前会话信息，有效期设为 30 分钟
     const statusData = { status: 'waiting', sessionId: sessionId };
@@ -116,7 +131,9 @@ async function handleNotify(request, url, userKey) {
     const tasks = [];
     if (ppToken) tasks.push(fetch('http://www.pushplus.plus/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: ppToken, title: "🚗 挪车请求：" + carTitle, content: notifyText.replace(/\\n/g, '<br>') + '<br><br><a href="' + confirmUrl + '" style="font-size:18px;color:#0093E9">【点击处理】</a>', template: 'html' }) }));
     if (barkUrl) tasks.push(fetch(barkUrl + "/" + encodeURIComponent('挪车请求') + "/" + encodeURIComponent(notifyText) + "?url=" + encodeURIComponent(confirmUrl)));
-
+    // === 新增：企业微信 Webhook 发送任务 ===
+    if (wecomWebhook) tasks.push(fetch(wecomWebhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ msgtype: 'markdown', markdown: { content: wecomContent } }) }));
+    // === 新增结束 ===
     await Promise.all(tasks);
     return new Response(JSON.stringify({ success: true }));
   } catch (e) {
