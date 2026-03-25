@@ -225,6 +225,16 @@ function renderQRPage(origin, userKey) {
 function renderMainPage(origin, userKey) {
   const phone = getUserConfig(userKey, 'PHONE_NUMBER') || '';
   const carTitle = getUserConfig(userKey, 'CAR_TITLE') || '车主';
+    // === 新增：检测是否有推送配置 ===
+  const hasNotifyConfig = getUserConfig(userKey, 'PUSHPLUS_TOKEN') || 
+                          getUserConfig(userKey, 'BARK_URL') || 
+                          getUserConfig(userKey, 'WECHAT_WORK_WEBHOOK');
+  const noNotifyHint = !hasNotifyConfig && phone ? '
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin:16px 0">
+⚠️ 车主未配置在线通知，请直接点击下方按钮拨打电话
+</div>
+' : '';
+  // === 新增结束 ===
   const phoneHtml = phone ? '<a href="tel:' + phone + '" class="btn-phone">📞 拨打车主电话</a>' : '';
 
   return new Response(`
@@ -286,6 +296,7 @@ function renderMainPage(origin, userKey) {
     </div>
     <div>
       <button class="btn-main" style="background:#f59e0b; margin-top:10px;" onclick="location.reload()">🔄 刷新状态</button>
+      ${noNotifyHint}
       ${phoneHtml}
     </div>
   </div>
