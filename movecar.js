@@ -123,7 +123,7 @@ async function handleNotify(request, url, userKey) {
     const wecomContent = `## 🚗 挪车请求通知
        > 车主：**${carTitle}**
        > 留言：${body.message || '车旁有人等待'}
-       > 时间：${new Date().toLocaleString()}
+       > 时间：${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
        [👉 点击处理通知](${confirmUrl})`;
     // === 新增结束 ===
     
